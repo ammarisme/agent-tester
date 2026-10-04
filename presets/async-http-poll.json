@@ -1,0 +1,26 @@
+{
+  "name": "Async agent (submit + poll)",
+  "category": "template",
+  "description": "For agents that accept work and finish later: submit a job, extract its id, then poll a status URL until a terminal state. Points at the mock async agent by default.",
+  "contract": {
+    "invoke": {
+      "method": "POST",
+      "url": "{{ agent.params.base_url }}/v1/jobs",
+      "headers": { "Content-Type": "application/json" },
+      "body_template": "{{ input }}",
+      "timeout_s": 60
+    },
+    "poll": {
+      "method": "GET",
+      "url_template": "{{ agent.params.base_url }}/v1/jobs/{{ extracted.job_id }}",
+      "headers": {},
+      "interval_s": 1,
+      "timeout_s": 300,
+      "done_when": "status in ['COMPLETED','SUCCEEDED','FAILED','ERROR','CANCELLED']",
+      "failed_when": "status in ['FAILED','ERROR','CANCELLED']",
+      "extract": { "final_text": "$.response", "status": "$.status" }
+    },
+    "extract": { "job_id": "$.id", "status": "$.status" }
+  },
+  "params": { "base_url": "http://mock-agent:9999" }
+}

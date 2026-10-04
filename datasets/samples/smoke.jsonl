@@ -1,0 +1,6 @@
+{"id": "greet", "input": {"message": "Hello agent"}, "expected": {"contains": ["Echo:", "Hello agent"]}, "tags": ["smoke"]}
+{"id": "arithmetic", "input": {"message": "What is 2+2?"}, "expected": {"contains": ["2+2"]}, "tags": ["smoke"]}
+{"id": "empty-input", "input": {"message": ""}, "expected": {"contains": ["Echo:"]}, "tags": ["edge"]}
+{"id": "summarize", "input": {"message": "Summarize the quarterly report in one sentence."}, "expected": {"contains": ["quarterly"], "not_contains": ["I'm not sure"]}, "tags": ["smoke"]}
+{"id": "unicode", "input": {"message": "Grüße aus Zürich 👋"}, "expected": {"regex": "Z(ü|u)rich"}, "tags": ["edge"]}
+{"id": "latency-budget", "input": {"message": "ping"}, "expected": {"contains": ["ping"], "max_latency_ms": 250}, "tags": ["perf"]}

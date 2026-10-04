@@ -1,0 +1,60 @@
+# Agent Tester — default stack.
+#
+#   cp .env.example .env
+#   docker compose up --build
+#   open http://localhost:3000
+#
+# Evaluations run inside the controller process: no Docker socket, no host
+# paths. For per-run container isolation, add docker-compose.docker-runner.yml.
+
+name: agent-tester
+
+services:
+  controller:
+    build:
+      context: .
+      dockerfile: controller/Dockerfile
+    image: agent-tester-controller:local
+    ports:
+      - "${UI_PORT:-3000}:3000"
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_PATH: /data/agent_tester.db
+    volumes:
+      - agent-tester-data:/data
+    extra_hosts:
+      # Lets contracts reach services on the Docker host.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mock-agent
+    restart: unless-stopped
+
+  # Demo agents used by the "Run the demo" button. Safe to remove in production.
+  mock-agent:
+    build: ./mocks
+    image: agent-tester-mock:local
+    ports:
+      - "${MOCK_PORT:-9999}:9999"
+    restart: unless-stopped
+
+  # The headless CLI, for one-off runs:
+  #   docker compose run --rm tester run --agent presets/mock-echo.json \
+  #     --dataset datasets/samples/smoke.jsonl
+  tester:
+    build: ./tester
+    image: agent-tester:local
+    profiles: ["cli"]
+    working_dir: /work
+    volumes:
+      - ./:/work
+    env_file:
+      - path: .env
+        required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  agent-tester-data:

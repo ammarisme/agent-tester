@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python (${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install
+        run: |
+          pip install -e "tester[dev]" -r controller/backend/requirements-dev.txt -r mocks/requirements.txt
+      - name: Lint
+        run: |
+          ruff check tester controller/backend mocks
+          ruff format --check tester controller/backend mocks
+      - name: Test runner package
+        working-directory: tester
+        run: pytest -q
+      - name: Test controller API
+        working-directory: controller/backend
+        run: pytest -q -p no:logging
+
+  ui:
+    name: UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: controller/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: controller/frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npx eslint .
+      - run: npm run build
+
+  images:
+    name: Docker images
+    runs-on: ubuntu-latest
+    needs: [python, ui]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker compose build
+      - name: Smoke test the stack
+        run: |
+          docker compose up -d
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:3000/api/health && break
+            sleep 2
+          done
+          curl -fsS -X POST http://localhost:3000/api/demo
+          mkdir -p reports
+          docker compose run --rm --user "$(id -u):$(id -g)" tester run \
+            --agent presets/mock-echo.json --dataset datasets/samples/smoke.jsonl \
+            --param base_url=http://mock-agent:9999 --fail-under 0.9 --junit reports/smoke.xml
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs

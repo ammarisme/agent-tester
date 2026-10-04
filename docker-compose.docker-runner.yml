@@ -1,0 +1,26 @@
+# Optional overlay: run every evaluation in its own short-lived tester container.
+#
+#   HOST_PROJECT_DIR=$PWD docker compose \
+#     -f docker-compose.yml -f docker-compose.docker-runner.yml up --build
+#
+# Trade-off: stronger isolation between runs and the controller, at the cost
+# of mounting the Docker socket (root-equivalent on the host) and no live
+# progress (results arrive when the container finishes).
+
+services:
+  controller:
+    build:
+      args:
+        WITH_DOCKER_CLI: "true"
+    # The Docker socket is root-owned; this mode needs root in the container.
+    user: root
+    environment:
+      RUNNER_MODE: docker
+      HOST_PROJECT_DIR: ${HOST_PROJECT_DIR:?set HOST_PROJECT_DIR to the absolute path of this directory}
+      COMPOSE_PROJECT_DIR: /workspace
+      JOBS_DIR: /workspace/data/jobs
+      PUBLIC_API_BASE: http://controller:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/workspace:ro
+      - ./data/jobs:/workspace/data/jobs

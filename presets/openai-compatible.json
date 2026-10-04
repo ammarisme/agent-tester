@@ -1,0 +1,36 @@
+{
+  "name": "OpenAI-compatible chat completions",
+  "category": "template",
+  "description": "Any /v1/chat/completions endpoint (gateways, vLLM, LiteLLM, hosted APIs). Extracts the assistant message plus token usage as metrics. The API key is read from AGENT_API_KEY.",
+  "contract": {
+    "invoke": {
+      "method": "POST",
+      "url": "{{ agent.params.base_url }}/v1/chat/completions",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${AGENT_API_KEY}"
+      },
+      "body_template": {
+        "model": "{{ agent.params.model }}",
+        "temperature": "{{ agent.params.temperature }}",
+        "messages": [
+          { "role": "system", "content": "{{ agent.params.system_prompt }}" },
+          { "role": "user", "content": "{{ input.message }}" }
+        ]
+      },
+      "timeout_s": 120
+    },
+    "poll": null,
+    "extract": {
+      "final_text": "$.choices[0].message.content",
+      "prompt_tokens": "$.usage.prompt_tokens",
+      "completion_tokens": "$.usage.completion_tokens"
+    }
+  },
+  "params": {
+    "base_url": "https://llm-gateway.example.com",
+    "model": "your-model-id",
+    "temperature": 0.2,
+    "system_prompt": "You are a helpful assistant."
+  }
+}

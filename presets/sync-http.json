@@ -1,0 +1,20 @@
+{
+  "name": "Sync HTTP agent",
+  "category": "template",
+  "description": "One request, one answer. Replace the URL and response paths with your agent's API. The bearer token is read from the AGENT_API_KEY environment variable on the runner.",
+  "contract": {
+    "invoke": {
+      "method": "POST",
+      "url": "{{ agent.params.base_url }}",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${AGENT_API_KEY}"
+      },
+      "body_template": { "message": "{{ input.message }}", "session_id": "{{ uuid() }}" },
+      "timeout_s": 120
+    },
+    "poll": null,
+    "extract": { "final_text": "$.reply" }
+  },
+  "params": { "base_url": "https://agent.example.com/v1/chat" }
+}

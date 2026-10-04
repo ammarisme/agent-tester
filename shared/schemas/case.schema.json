@@ -1,0 +1,119 @@
+{
+  "$defs": {
+    "Expectations": {
+      "additionalProperties": false,
+      "description": "Deterministic checks. Unknown keys are rejected so typos surface early.",
+      "properties": {
+        "equals": {
+          "default": null,
+          "title": "Equals"
+        },
+        "contains": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contains"
+        },
+        "not_contains": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Not Contains"
+        },
+        "regex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Regex"
+        },
+        "jsonpath_equals": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Jsonpath Equals"
+        },
+        "max_latency_ms": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Latency Ms"
+        }
+      },
+      "title": "Expectations",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "One evaluation case. Extra keys are kept and exposed to templates as case.*.",
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "input": {
+      "default": null,
+      "title": "Input"
+    },
+    "expected": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Expectations"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "title": "Case",
+  "type": "object"
+}

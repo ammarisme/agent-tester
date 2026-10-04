@@ -1,0 +1,17 @@
+{
+  "name": "Mock echo agent",
+  "category": "demo",
+  "description": "Deterministic echo agent that ships with Agent Tester. Use it to try the workflow end to end with no credentials.",
+  "contract": {
+    "invoke": {
+      "method": "POST",
+      "url": "{{ agent.params.base_url }}/v1/chat",
+      "headers": { "Content-Type": "application/json" },
+      "body_template": { "message": "{{ input.message }}", "session_id": "{{ uuid() }}" },
+      "timeout_s": 30
+    },
+    "poll": null,
+    "extract": { "final_text": "$.reply", "tokens": "$.tokens" }
+  },
+  "params": { "base_url": "http://mock-agent:9999" }
+}

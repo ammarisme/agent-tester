@@ -1,0 +1,421 @@
+{
+  "$defs": {
+    "AgentContract": {
+      "additionalProperties": false,
+      "description": "Declarative HTTP contract: invoke, optionally poll, then extract fields.",
+      "properties": {
+        "invoke": {
+          "$ref": "#/$defs/InvokeSpec"
+        },
+        "poll": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PollSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "extract": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Field name \u2192 JSONPath. 'final_text' is scored; numeric fields become metrics.",
+          "title": "Extract",
+          "type": "object"
+        }
+      },
+      "required": [
+        "invoke"
+      ],
+      "title": "AgentContract",
+      "type": "object"
+    },
+    "AgentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "contract": {
+          "$ref": "#/$defs/AgentContract"
+        },
+        "params": {
+          "additionalProperties": true,
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "contract"
+      ],
+      "title": "AgentSpec",
+      "type": "object"
+    },
+    "Case": {
+      "additionalProperties": true,
+      "description": "One evaluation case. Extra keys are kept and exposed to templates as case.*.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "input": {
+          "default": null,
+          "title": "Input"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Expectations"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Case",
+      "type": "object"
+    },
+    "DatasetRef": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Case"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cases"
+        },
+        "uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uri"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Headers",
+          "type": "object"
+        }
+      },
+      "title": "DatasetRef",
+      "type": "object"
+    },
+    "EvalOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "concurrency": {
+          "default": 8,
+          "maximum": 256,
+          "minimum": 1,
+          "title": "Concurrency",
+          "type": "integer"
+        },
+        "repeats": {
+          "default": 1,
+          "description": "Trials per case. >1 measures consistency.",
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Repeats",
+          "type": "integer"
+        },
+        "score_expectations": {
+          "default": true,
+          "description": "Evaluate each case's 'expected' block. Off = outcome classes only.",
+          "title": "Score Expectations",
+          "type": "boolean"
+        },
+        "body_truncate_chars": {
+          "default": 32000,
+          "minimum": 256,
+          "title": "Body Truncate Chars",
+          "type": "integer"
+        }
+      },
+      "title": "EvalOptions",
+      "type": "object"
+    },
+    "Expectations": {
+      "additionalProperties": false,
+      "description": "Deterministic checks. Unknown keys are rejected so typos surface early.",
+      "properties": {
+        "equals": {
+          "default": null,
+          "title": "Equals"
+        },
+        "contains": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contains"
+        },
+        "not_contains": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Not Contains"
+        },
+        "regex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Regex"
+        },
+        "jsonpath_equals": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Jsonpath Equals"
+        },
+        "max_latency_ms": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Latency Ms"
+        }
+      },
+      "title": "Expectations",
+      "type": "object"
+    },
+    "InvokeSpec": {
+      "additionalProperties": false,
+      "description": "How to call the agent for one case.",
+      "properties": {
+        "method": {
+          "default": "POST",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "url": {
+          "description": "Target URL. Supports {{ templates }}.",
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Headers",
+          "type": "object"
+        },
+        "body_template": {
+          "default": null,
+          "description": "JSON body. Strings inside are templates; a lone '{{ expr }}' keeps its type.",
+          "title": "Body Template"
+        },
+        "timeout_s": {
+          "default": 60,
+          "exclusiveMinimum": 0,
+          "maximum": 3600,
+          "title": "Timeout S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "InvokeSpec",
+      "type": "object"
+    },
+    "PollSpec": {
+      "additionalProperties": false,
+      "description": "Optional second phase for agents that accept work and finish later.",
+      "properties": {
+        "method": {
+          "default": "GET",
+          "enum": [
+            "GET",
+            "POST"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "url_template": {
+          "minLength": 1,
+          "title": "Url Template",
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Headers",
+          "type": "object"
+        },
+        "body_template": {
+          "default": null,
+          "title": "Body Template"
+        },
+        "interval_s": {
+          "default": 2,
+          "maximum": 600,
+          "minimum": 0.05,
+          "title": "Interval S",
+          "type": "number"
+        },
+        "timeout_s": {
+          "default": 600,
+          "exclusiveMinimum": 0,
+          "maximum": 86400,
+          "title": "Timeout S",
+          "type": "number"
+        },
+        "done_when": {
+          "description": "Predicate on the poll response, e.g. \"status in ['COMPLETED','FAILED']\".",
+          "minLength": 1,
+          "title": "Done When",
+          "type": "string"
+        },
+        "failed_when": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "status in ['FAILED','ERROR','CANCELLED']",
+          "description": "Predicate that marks a terminal response as an agent failure.",
+          "title": "Failed When"
+        },
+        "extract": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Extract",
+          "type": "object"
+        }
+      },
+      "required": [
+        "url_template",
+        "done_when"
+      ],
+      "title": "PollSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "agents": {
+      "items": {
+        "$ref": "#/$defs/AgentSpec"
+      },
+      "minItems": 1,
+      "title": "Agents",
+      "type": "array"
+    },
+    "dataset": {
+      "$ref": "#/$defs/DatasetRef"
+    },
+    "callback_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Callback Url"
+    },
+    "options": {
+      "$ref": "#/$defs/EvalOptions"
+    }
+  },
+  "required": [
+    "agents",
+    "dataset"
+  ],
+  "title": "EvalJob",
+  "type": "object"
+}

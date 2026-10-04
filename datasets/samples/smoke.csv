@@ -1,0 +1,4 @@
+id,message,expected,tags
+greet,Hello agent,Hello agent,smoke
+arithmetic,What is 2+2?,2+2,smoke
+refund-policy,What is your refund policy?,"{""not_contains"": [""I'm not sure""]}",support

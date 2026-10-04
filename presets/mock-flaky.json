@@ -1,0 +1,17 @@
+{
+  "name": "Mock flaky agent",
+  "category": "demo",
+  "description": "Same API as the echo agent, but with long-tailed latency, occasional wrong answers and 503s. Compare it with the echo agent to see how distributions separate.",
+  "contract": {
+    "invoke": {
+      "method": "POST",
+      "url": "{{ agent.params.base_url }}/v1/flaky",
+      "headers": { "Content-Type": "application/json" },
+      "body_template": { "message": "{{ input.message }}" },
+      "timeout_s": 30
+    },
+    "poll": null,
+    "extract": { "final_text": "$.reply", "tokens": "$.tokens" }
+  },
+  "params": { "base_url": "http://mock-agent:9999" }
+}
