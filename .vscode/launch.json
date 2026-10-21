@@ -1,0 +1,69 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "module": "uvicorn",
+      "cwd": "${workspaceFolder}/controller/backend",
+      "args": [
+        "app.main:app",
+        "--port",
+        "8000",
+        "--reload",
+        "--reload-dir",
+        "app",
+        "--reload-dir",
+        "../../tester/agent_tester"
+      ],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "DATABASE_PATH": "${workspaceFolder}/data/dev.db",
+        "DEMO_AGENT_URL": "http://127.0.0.1:9999"
+      },
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true
+    },
+    {
+      "name": "Frontend",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/controller/frontend",
+      "env": {
+        "API_INTERNAL_URL": "http://127.0.0.1:8000"
+      }
+    },
+    {
+      "name": "Mock agent",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "module": "uvicorn",
+      "cwd": "${workspaceFolder}/mocks",
+      "args": [
+        "echo_agent:app",
+        "--port",
+        "9999",
+        "--log-level",
+        "warning"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full stack",
+      "configurations": [
+        "Mock agent",
+        "API",
+        "Frontend"
+      ],
+      "stopAll": true
+    }
+  ]
+}
